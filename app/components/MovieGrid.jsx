@@ -57,16 +57,69 @@ export default function MovieGrid() {
   return (
     <motion.div
       ref={ref}
-      className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4"
+      initial={{ opacity: 0, scale: 0.96, filter: "blur(16px)" }}
+      animate={isInView ? { opacity: 1, scale: 1, filter: "blur(0px)" } : {}}
+      transition={{ duration: 1.2, type: "spring", bounce: 0.38 }}
+      className="relative min-h-screen px-4 py-10 overflow-x-hidden flex flex-col items-center justify-center"
     >
-      {movies.map((movie, i) => (
-        <motion.div
-          key={movie.id}
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: i * 0.05 }}
-          className="bg-black rounded-xl overflow-hidden text-white shadow-lg"
-        >
+      {/* Animated Waving Background */}
+      <motion.div
+        initial={{ opacity: 0, y: 80 }}
+        animate={isInView ? { opacity: 0.7, y: 0 } : {}}
+        transition={{ duration: 1.2, type: "spring", bounce: 0.4, delay: 0.1 }}
+        className="absolute inset-0 -z-10"
+        style={{ pointerEvents: 'none' }}
+      >
+        <svg width="100%" height="100%" viewBox="0 0 1440 600" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+          <motion.path
+            d="M0,400 Q360,300 720,400 T1440,400 V600 H0 Z"
+            initial={{ pathLength: 0 }}
+            animate={isInView ? { pathLength: 1 } : {}}
+            transition={{ duration: 1.6, ease: "easeInOut" }}
+            fill="url(#waveGradient)"
+          />
+          <defs>
+            <linearGradient id="waveGradient" x1="0" y1="0" x2="1440" y2="600" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#0ea5e9" />
+              <stop offset="0.5" stopColor="#6366f1" />
+              <stop offset="1" stopColor="#f472b6" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </motion.div>
+
+      {/* Animated Stylish Heading */}
+      <motion.h1
+        initial={{ opacity: 0, y: -60, scale: 0.7, rotate: -8 }}
+        animate={isInView ? { opacity: 1, y: 0, scale: 1.08, rotate: 0 } : {}}
+        transition={{ duration: 1, type: "spring", bounce: 0.5 }}
+        className="text-center text-4xl sm:text-5xl md:text-6xl font-extrabold mb-12 text-white drop-shadow-[0_0_32px_#fff] tracking-tight animate-bounce"
+        style={{ textShadow: '0 0 32px #fff, 0 0 64px #0ea5e9' }}
+      >
+        <span className="inline-block animate-pulse">🔥 Popular Movies 🔥</span>
+      </motion.h1>
+
+      {/* Loader or Movie Grid */}
+      {movies.length === 0 ? (
+        <div className="flex flex-col items-center justify-center min-h-[300px]">
+          <motion.div
+            initial={{ scale: 0.7, opacity: 0.5 }}
+            animate={{ scale: [0.7, 1.1, 0.9, 1], opacity: [0.5, 1, 0.7, 1] }}
+            transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+            className="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 blur-sm"
+          />
+          <p className="mt-6 text-lg text-cyan-200 animate-pulse">Loading movies...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {movies.map((movie, i) => (
+          <motion.div
+            key={movie.id}
+            initial={{ opacity: 0, y: 40, scale: 0.92 }}
+            animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
+            transition={{ delay: i * 0.09 + 0.3, duration: 0.7, type: "spring", bounce: 0.4 }}
+            className="bg-black/80 rounded-xl overflow-hidden text-white shadow-lg border border-cyan-900/30 hover:scale-110 hover:shadow-cyan-500/40 transition-transform duration-300"
+          >
           {/* IMAGE */}
           <div className="relative h-[250px] w-full">
             <Image
@@ -110,7 +163,9 @@ export default function MovieGrid() {
             </div>
           </div>
         </motion.div>
-      ))}
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 }
