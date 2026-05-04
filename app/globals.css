@@ -24,3 +24,32 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+@keyframes wave1 {
+  0% { transform: translateX(-25%) translateY(-10%) rotate(0deg); }
+  50% { transform: translateX(0%) translateY(10%) rotate(180deg); }
+  100% { transform: translateX(-25%) translateY(-10%) rotate(360deg); }
+}
+
+@keyframes wave2 {
+  0% { transform: translateX(20%) translateY(0%) rotate(0deg); }
+  50% { transform: translateX(-10%) translateY(-15%) rotate(180deg); }
+  100% { transform: translateX(20%) translateY(0%) rotate(360deg); }
+}
+
+@keyframes wave3 {
+  0% { transform: translateX(-10%) translateY(20%) rotate(0deg); }
+  50% { transform: translateX(10%) translateY(-10%) rotate(180deg); }
+  100% { transform: translateX(-10%) translateY(20%) rotate(360deg); }
+}
+
+.animate-wave1 {
+  animation: wave1 12s ease-in-out infinite;
+}
+
+.animate-wave2 {
+  animation: wave2 15s ease-in-out infinite;
+}
+
+.animate-wave3 {
+  animation: wave3 18s ease-in-out infinite;
+}
