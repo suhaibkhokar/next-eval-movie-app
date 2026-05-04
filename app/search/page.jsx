@@ -17,52 +17,20 @@ export default function SearchPageClient() {
   const [viewMode, setViewMode] = useState("grid");
   const [hoveredCard, setHoveredCard] = useState(null);
 
-  const movies = [
-    {
-      id: 1,
-      title: "Batman Begins",
-      image: "/movie.jpg",
-      desc: "Action • Adventure • A young Bruce Wayne rises from darkness to become Gotham’s protector.",
-      link: "https://youtu.be/BPQOf-aPa0A",
-      rating: 8.2,
-      year: 2005,
-      duration: "2h 20m",
-      fullDesc: "Bruce Wayne travels the world to learn fighting skills and returns to Gotham to fight crime as Batman."
-    },
-    {
-      id: 2,
-      title: "The Batman",
-      image: "/movie1.jpg",
-      desc: "Dark • Thriller • A detective-style Batman uncovers hidden corruption in Gotham City.",
-      link: "https://youtu.be/BJ2VqM1V_hQ",
-      rating: 8.5,
-      year: 2022,
-      duration: "2h 56m",
-      fullDesc: "Batman investigates a series of murders that expose corruption in Gotham."
-    },
-    {
-      id: 3,
-      title: "Avengers",
-      image: "/movie2.jpg",
-      desc: "Action • Marvel • Earth’s greatest heroes unite to fight global destruction.",
-      link: "https://youtu.be/ZiqtPF8eimg",
-      rating: 8.0,
-      year: 2012,
-      duration: "2h 23m",
-      fullDesc: "Iron Man, Thor, Hulk and others team up to save Earth."
-    },
-    {
-      id: 4,
-      title: "Joker",
-      image: "/movie.jpg",
-      desc: "Drama • Crime • A psychological journey into chaos and madness.",
-      link: "https://youtu.be/vGCQPi430o0",
-      rating: 8.4,
-      year: 2019,
-      duration: "2h 2m",
-      fullDesc: "Arthur Fleck transforms into the Joker in a dark psychological story."
-    },
-  ];
+  const [movies, setMovies] = useState([]);
+  useEffect(() => {
+    async function load() {
+      const { fetchPopularMovies } = await import("../lib/tmdb");
+      try {
+        const data = await fetchPopularMovies();
+        setMovies(data);
+      } catch (e) {
+        setMovies([]);
+      }
+    }
+    load();
+  }, []);
+// ...existing code...
 
   // scroll to matched movie
   useEffect(() => {
@@ -83,7 +51,7 @@ export default function SearchPageClient() {
   }, [query]);
 
   const filtered = query
-    ? movies.filter((m) => m.title.toLowerCase().includes(query))
+    ? movies.filter((m) => m.title && m.title.toLowerCase().includes(query))
     : movies;
 
   return (
@@ -125,7 +93,7 @@ export default function SearchPageClient() {
             >
               <div className="relative h-60">
                 <Image
-                  src={movie.image}
+                  src={require("../lib/tmdb").getImageUrl(movie.poster_path)}
                   alt={movie.title}
                   fill
                   className="object-cover"
@@ -134,7 +102,7 @@ export default function SearchPageClient() {
 
               <div className="p-4">
                 <h2 className="text-lg font-bold">{movie.title}</h2>
-                <p className="text-sm text-gray-400">{movie.desc}</p>
+                <p className="text-sm text-gray-400">{movie.overview}</p>
 
                 <div className="flex gap-3 mt-3">
                   <a

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { getImageUrl } from "../lib/tmdb";
 
 export default function FavoritesPage() {
   const router = useRouter();
@@ -43,7 +44,7 @@ export default function FavoritesPage() {
               {/* IMAGE */}
               <div className="relative w-full h-[200px] sm:h-[240px] md:h-[260px]">
                 <Image
-                  src={movie.image}
+                  src={getImageUrl(movie.poster_path || movie.image)}
                   alt={movie.title}
                   fill
                   sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"

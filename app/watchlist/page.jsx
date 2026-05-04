@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { getImageUrl } from "../lib/tmdb";
 
 export default function WatchlistPage() {
   const router = useRouter();
@@ -104,7 +105,7 @@ export default function WatchlistPage() {
                   {/* Image container */}
                   <div className="relative aspect-[2/3] overflow-hidden">
                     <Image
-                      src={movie.image}
+                      src={getImageUrl(movie.poster_path || movie.image)}
                       alt={movie.title || "Movie poster"}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -148,7 +149,7 @@ export default function WatchlistPage() {
                   {/* Action button */}
                   <div className="p-4">
                     <a
-                      href={movie.link}
+                      href={`https://www.themoviedb.org/movie/${movie.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:from-cyan-400 hover:to-blue-500 hover:shadow-cyan-500/50"
