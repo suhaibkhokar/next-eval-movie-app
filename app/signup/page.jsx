@@ -8,22 +8,33 @@ import { motion } from "framer-motion";
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+  const [userEmail, setUserEmail] = useState("");
 
   const handleSignup = async (e) => {
     e.preventDefault();
-
+    setMessage("");
+    setMessageType("");
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
-
-      console.log("User Created:", userCredential.user);
-      alert("Signup successful!");
+      setUserEmail(userCredential.user.email);
+      setMessage("Signup successful! Redirecting...");
+      setMessageType("success");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1200);
     } catch (error) {
-      console.log(error.message);
-      alert(error.message);
+      let msg = "Signup failed. Please try again.";
+      if (error.code === "auth/email-already-in-use") msg = "This email is already registered.";
+      else if (error.code === "auth/invalid-email") msg = "Please enter a valid email address.";
+      else if (error.code === "auth/weak-password") msg = "Password should be at least 6 characters.";
+      setMessage(msg);
+      setMessageType("error");
     }
   };
 
@@ -42,6 +53,37 @@ export default function Signup() {
         transition={{ duration: 0.5 }}
         className="w-[350px] p-8 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl"
       >
+        {/* Animated error/success message and user email */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+          {message && (
+            <motion.div
+              key={message}
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className={`mb-2 px-4 py-2 rounded-lg text-center font-medium shadow-lg ${
+                messageType === "error"
+                  ? "bg-red-500/80 text-white border border-red-300"
+                  : "bg-green-500/80 text-white border border-green-300"
+              }`}
+            >
+              {message}
+            </motion.div>
+          )}
+          {userEmail && messageType === "success" && (
+            <motion.div
+              key={userEmail}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.5 }}
+              className="mb-4 px-4 py-2 rounded-lg text-center font-semibold bg-white/80 text-purple-700 border border-purple-300 shadow-lg"
+            >
+              {userEmail}
+            </motion.div>
+          )}
+        </motion.div>
         <h2 className="text-3xl font-bold text-white text-center mb-6">
           Create Account
         </h2>

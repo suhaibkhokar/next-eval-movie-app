@@ -11,6 +11,7 @@ import { auth } from "../lib/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Menu, X, Sparkles, Bookmark, Heart } from "lucide-react";
+import { fetchPopularMovies } from "../lib/tmdb";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
@@ -22,6 +23,19 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [allMovies, setAllMovies] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  // Fetch movies for autocomplete when search is opened
+  useEffect(() => {
+    if (showSearch && allMovies.length === 0) {
+      fetchPopularMovies().then(setAllMovies).catch(() => setAllMovies([]));
+    }
+  }, [showSearch, allMovies.length]);
+
+  // Filtered movie titles for dropdown
+  const filteredTitles = query.length > 0
+    ? allMovies.filter((m) => m.title?.toLowerCase().includes(query.toLowerCase()))
+    : [];
 
   const router = useRouter();
 
@@ -82,7 +96,17 @@ export default function Navbar() {
       router.push(`/search?query=${query}`);
       setShowSearch(false);
       setQuery("");
+      setShowDropdown(false);
+    } else {
+      setShowDropdown(true);
     }
+  };
+
+  const handleSelectTitle = (title) => {
+    setQuery(title);
+    setShowSearch(false);
+    setShowDropdown(false);
+    router.push(`/search?query=${encodeURIComponent(title)}`);
   };
 
   const navItems = [
@@ -297,18 +321,56 @@ export default function Navbar() {
 
               <AnimatePresence>
                 {showSearch && (
-                  <motion.input
-                    initial={{ width: 0, opacity: 0, x: -20 }}
-                    animate={{ width: window.innerWidth < 640 ? 120 : 160, opacity: 1, x: 0 }}
-                    exit={{ width: 0, opacity: 0, x: -20 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 25 }}
-                    type="text"
-                    placeholder="Search..."
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={handleSearch}
-                    className="rounded-full border border-cyan-500/30 bg-black/60 px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-white placeholder-gray-400 outline-none ring-2 ring-cyan-500/20 backdrop-blur-xl transition-all focus:border-cyan-500/50 focus:ring-cyan-500/40"
-                  />
+                  <div className="relative">
+                    <motion.input
+                      initial={{ width: 0, opacity: 0, x: -20 }}
+                      animate={{ width: window.innerWidth < 640 ? 120 : 160, opacity: 1, x: 0 }}
+                      exit={{ width: 0, opacity: 0, x: -20 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                      type="text"
+                      placeholder="Search..."
+                      value={query}
+                      onChange={(e) => {
+                        setQuery(e.target.value);
+                        setShowDropdown(true);
+                      }}
+                      onKeyDown={handleSearch}
+                      onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+                      className="rounded-full border border-cyan-500/30 bg-black/60 px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-white placeholder-gray-400 outline-none ring-2 ring-cyan-500/20 backdrop-blur-xl transition-all focus:border-cyan-500/50 focus:ring-cyan-500/40"
+                      autoFocus
+                    />
+                    {/* Autocomplete dropdown */}
+                    {showDropdown && filteredTitles.length > 0 && (
+                      <motion.ul
+                        initial={{ opacity: 0, y: -24, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 12, scale: 1 }}
+                        exit={{ opacity: 0, y: -24, scale: 0.96 }}
+                        transition={{ type: "spring", stiffness: 220, damping: 18 }}
+                        className="absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[340px] rounded-2xl bg-gradient-to-br from-cyan-500/80 via-blue-700/90 to-purple-700/90 border-2 border-cyan-400/60 shadow-2xl z-50 backdrop-blur-2xl p-2 animate-pulse"
+                        style={{ boxShadow: "0 0 32px 4px #06b6d4, 0 2px 32px 0 #7c3aed55" }}
+                      >
+                        {filteredTitles.slice(0, 8).map((m, idx) => (
+                          <motion.li
+                            key={m.id}
+                            onMouseDown={() => handleSelectTitle(m.title)}
+                            whileHover={{ scale: 1.04, backgroundColor: "#a21caf" }}
+                            transition={{ type: "spring", stiffness: 300, damping: 18 }}
+                            className="px-6 py-3 cursor-pointer text-white text-lg font-bold rounded-xl mb-2 last:mb-0 bg-white/5 hover:bg-fuchsia-600/80 hover:text-yellow-200 shadow-md transition-all text-center"
+                            style={{ borderBottom: idx !== filteredTitles.length - 1 ? "2px solid #7c3aed33" : "none" }}
+                          >
+                            <motion.span
+                              initial={{ opacity: 0.7 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ duration: 0.4, delay: idx * 0.04 }}
+                              className="bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-lg"
+                            >
+                              {m.title}
+                            </motion.span>
+                          </motion.li>
+                        ))}
+                      </motion.ul>
+                    )}
+                  </div>
                 )}
               </AnimatePresence>
             </div>
@@ -317,24 +379,15 @@ export default function Navbar() {
             <div className="hidden items-center gap-3 text-sm md:flex">
               {!user ? (
                 <>
-                  <motion.button
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleGoogleLogin}
-                    disabled={loading}
-                    className="group relative overflow-hidden rounded-full bg-white px-5 py-2 font-semibold text-black transition-all disabled:opacity-50"
-                  >
-                    <motion.span
-                      className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500"
-                      initial={{ x: "-100%" }}
-                      whileHover={{ x: 0 }}
-                      transition={{ duration: 0.3 }}
-                    />
-                    <span className="relative z-10 group-hover:text-white">
-                      {loading ? "Loading..." : "🚀 Login"}
-                    </span>
-                  </motion.button>
-
+                  <Link href="/login">
+                    <motion.button
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="relative overflow-hidden rounded-full bg-white px-5 py-2 font-semibold text-black transition-all shadow-lg shadow-cyan-500/20 mr-2"
+                    >
+                      <span className="relative z-10">🚀 Login</span>
+                    </motion.button>
+                  </Link>
                   <Link href="/signup">
                     <motion.button
                       whileHover={{ scale: 1.05, y: -2 }}
@@ -354,6 +407,20 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
+                  {/* User name and email display */}
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="flex flex-col items-end mr-2"
+                  >
+                    <span className="font-bold text-cyan-300 text-base leading-tight">
+                      {user?.email?.split("@")[0]}
+                    </span>
+                    <span className="text-xs text-cyan-100 bg-cyan-900/60 px-2 py-0.5 rounded mt-0.5 shadow">
+                      {user?.email}
+                    </span>
+                  </motion.div>
                   <Link href="/watchlist">
                     <motion.div
                       whileHover={{ scale: 1.1, y: -2 }}

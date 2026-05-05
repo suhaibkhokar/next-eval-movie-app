@@ -1,5 +1,4 @@
 "use client";
-
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { motion, useInView } from "framer-motion";
@@ -12,6 +11,10 @@ export default function MovieGrid() {
   const [movies, setMovies] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [watchlist, setWatchlist] = useState([]);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [visibleRows, setVisibleRows] = useState(1); // Number of visible rows
 
   useEffect(() => {
     const fav = JSON.parse(localStorage.getItem("favorites")) || [];
@@ -41,17 +44,67 @@ export default function MovieGrid() {
   const isFav = (id) => favorites.some((m) => m.id === id);
   const isWatch = (id) => watchlist.some((m) => m.id === id);
 
+  // Initial load
   useEffect(() => {
     async function load() {
       try {
-        const data = await fetchPopularMovies();
+        const data = await fetchPopularMovies(1);
         setMovies(data);
+        setPage(2);
+        setHasMore(data.length > 0);
       } catch (err) {
+        setHasMore(false);
         console.log("API Error:", err);
       }
     }
-
     load();
+  }, []);
+
+  // Infinite scroll handler for rows
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 400 &&
+        !loadingMore &&
+        hasMore
+      ) {
+        setLoadingMore(true);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loadingMore, hasMore]);
+
+  // Fetch more movies when loadingMore is set
+  useEffect(() => {
+    if (!loadingMore) return;
+    async function loadMore() {
+      try {
+        const data = await fetchPopularMovies(page);
+        if (data.length === 0) {
+          setHasMore(false);
+        } else {
+          setMovies((prev) => [...prev, ...data]);
+          setPage((p) => p + 1);
+        }
+      } catch (err) {
+        setHasMore(false);
+      } finally {
+        setLoadingMore(false);
+      }
+    }
+    loadMore();
+  }, [loadingMore, page]);
+
+  // Show more rows as user scrolls
+  useEffect(() => {
+    const onScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+        setVisibleRows((r) => r + 1);
+      }
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
@@ -112,57 +165,57 @@ export default function MovieGrid() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {movies.map((movie, i) => (
-          <motion.div
-            key={movie.id}
-            initial={{ opacity: 0, y: 40, scale: 0.92 }}
-            animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
-            transition={{ delay: i * 0.09 + 0.3, duration: 0.7, type: "spring", bounce: 0.4 }}
-            className="bg-black/80 rounded-xl overflow-hidden text-white shadow-lg border border-cyan-900/30 hover:scale-110 hover:shadow-cyan-500/40 transition-transform duration-300"
-          >
-          {/* IMAGE */}
-          <div className="relative h-[250px] w-full">
-            <Image
-              src={getImageUrl(movie.poster_path)}
-              alt={movie.title || "movie"}
-              fill
-              className="object-cover"
-              priority={i < 4}
-            />
-          </div>
+          {movies.slice(0, visibleRows * 4).map((movie, i) => (
+            <motion.div
+              key={movie.id}
+              initial={{ opacity: 0, y: 40, scale: 0.92 }}
+              animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
+              transition={{ delay: (i % 4) * 0.09 + 0.3, duration: 0.7, type: "spring", bounce: 0.4 }}
+              className="bg-black/80 rounded-xl overflow-hidden text-white shadow-lg border border-cyan-900/30 hover:scale-110 hover:shadow-cyan-500/40 transition-transform duration-300"
+            >
+              {/* IMAGE */}
+              <div className="relative h-[250px] w-full">
+                <Image
+                  src={getImageUrl(movie.poster_path)}
+                  alt={movie.title || "movie"}
+                  fill
+                  className="object-cover"
+                  priority={i < 4}
+                />
+              </div>
 
-          {/* INFO */}
-          <div className="p-3">
-            <h2 className="font-bold text-sm md:text-base">
-              {movie.title}
-            </h2>
-            <p className="text-xs text-gray-400 line-clamp-2 mt-1">
-              {movie.overview}
-            </p>
-            <div className="flex flex-col gap-2 mt-3">
-              <button
-                onClick={() => toggleFavorite(movie)}
-                className={`px-2 py-1 text-xs rounded font-semibold transition-all ${
-                  isFav(movie.id)
-                    ? "bg-gradient-to-r from-red-600 to-pink-600 text-white shadow"
-                    : "bg-gray-700 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 text-white"
-                }`}
-              >
-                ❤️ Like
-              </button>
-              <button
-                onClick={() => toggleWatch(movie)}
-                className={`px-2 py-1 text-xs rounded font-semibold transition-all ${
-                  isWatch(movie.id)
-                    ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow"
-                    : "bg-gray-700 hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 text-white"
-                }`}
-              >
-                📌 Watchlist
-              </button>
-            </div>
-          </div>
-        </motion.div>
+              {/* INFO */}
+              <div className="p-3">
+                <h2 className="font-bold text-sm md:text-base">
+                  {movie.title}
+                </h2>
+                <p className="text-xs text-gray-400 line-clamp-2 mt-1">
+                  {movie.overview}
+                </p>
+                <div className="flex flex-col gap-2 mt-3">
+                  <button
+                    onClick={() => toggleFavorite(movie)}
+                    className={`px-2 py-1 text-xs rounded font-semibold transition-all ${
+                      isFav(movie.id)
+                        ? "bg-gradient-to-r from-red-600 to-pink-600 text-white shadow"
+                        : "bg-gray-700 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 text-white"
+                    }`}
+                  >
+                    ❤️ Like
+                  </button>
+                  <button
+                    onClick={() => toggleWatch(movie)}
+                    className={`px-2 py-1 text-xs rounded font-semibold transition-all ${
+                      isWatch(movie.id)
+                        ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow"
+                        : "bg-gray-700 hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 text-white"
+                    }`}
+                  >
+                    📌 Watchlist
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           ))}
         </div>
       )}
