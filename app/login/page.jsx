@@ -106,7 +106,7 @@ export default function Login() {
           )}
         </AnimatePresence>
 
-        <h2 className="text-3xl font-bold text-white text-center mb-6">Sign In</h2>
+        <h2 className="text-3xl font-bold text-white text-center mb-6">Login</h2>
 
         <form onSubmit={handleLogin}>
           <motion.input
@@ -136,7 +136,7 @@ export default function Login() {
             disabled={loading}
             className="w-full p-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? "login in..." : "login In"}
           </motion.button>
         </form>
 
