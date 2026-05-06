@@ -415,7 +415,7 @@ export default function Navbar() {
                     className="flex flex-col items-end mr-2"
                   >
                     <span className="font-bold text-cyan-300 text-base leading-tight">
-                      {user?.email?.split("@")[0]}
+                      {user?.displayName || user?.email?.split("@")[0]}
                     </span>
                     <span className="text-xs text-cyan-100 bg-cyan-900/60 px-2 py-0.5 rounded mt-0.5 shadow">
                       {user?.email}

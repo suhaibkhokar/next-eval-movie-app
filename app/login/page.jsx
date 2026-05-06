@@ -27,6 +27,7 @@ export default function Login() {
         window.location.href = "/";
       }, 1200);
     } catch (error) {
+      console.error("Login error:", error);
       let msg = "Login failed. Please try again.";
       if (error.code === "auth/user-not-found") msg = "No account found with this email.";
       else if (error.code === "auth/wrong-password") msg = "Incorrect password. Please try again.";
